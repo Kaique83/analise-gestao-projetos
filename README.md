@@ -22,14 +22,13 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
+    git clone [https://github.com/Kaique83/sistema-gestao-projetos.git](https://github.com/Kaique83/sistema-gestao-projetos.git)
     ```
 2.  **Navegue até a pasta do projeto:**
     ```bash
-    cd sistema-gestao-projetos/gestao_projetos
+    cd sistema-gestao-projetos
     ```
 3.  **Instale as dependências:**
-    *(Você precisará criar um arquivo `requirements.txt` com as bibliotecas)*
     ```bash
     pip install -r requirements.txt
     ```
@@ -37,6 +36,7 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
     ```bash
     python main.py
     ```
+A única alteração é no passo 2, garantindo que as instruções levem o usuário para a pasta raiz correta.
 
 ## 🖼 Screenshots
 
