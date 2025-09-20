@@ -36,7 +36,6 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
     ```bash
     python main.py
     ```
-A única alteração é no passo 2, garantindo que as instruções levem o usuário para a pasta raiz correta.
 
 ## 🖼 Screenshots
 
