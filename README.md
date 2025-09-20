@@ -2,6 +2,17 @@
 
 Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes, desenvolvido em Python com a biblioteca CustomTkinter.
 
+## 🎯 Motivação e Objetivos
+
+Este projeto nasceu da necessidade de criar uma alternativa centralizada e visual às ferramentas genéricas, como planilhas, que frequentemente levam à desorganização e à falta de clareza no gerenciamento de projetos.
+
+Os principais objetivos do GESTPRO são:
+
+* **Centralizar a Informação:** Oferecer um local único para todos os dados de projetos, equipes e tarefas.
+* **Aumentar a Visibilidade:** Fornecer uma visão clara e instantânea do progresso através de um dashboard com gráficos e barras de progresso.
+* **Otimizar o Fluxo de Trabalho:** Implementar um quadro Kanban para uma gestão de tarefas ágil e transparente.
+* **Facilitar a Colaboração:** Definir papéis de usuário claros e permitir o gerenciamento de membros em projetos e equipes.
+
 ##  Funcionalidades
 
 * **Dashboard Intuitivo:** Visualização rápida do status dos projetos e tarefas com gráficos.
