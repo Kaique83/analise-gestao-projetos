@@ -54,6 +54,23 @@ Os principais objetivos do GESTPRO são:
 
 <img width="495" height="589" alt="image" src="https://github.com/user-attachments/assets/29eabfff-c1f0-4180-806f-3cfd2756be9b" />
 
+
 **Dashboard**
 
 <img width="1488" height="877" alt="image" src="https://github.com/user-attachments/assets/f4b25f41-b42c-4c0f-8500-81262ec87ff7" />
+
+
+**Quadro Kanban**
+
+<img width="1920" height="1020" alt="Captura de tela 2025-09-20 192100" src="https://github.com/user-attachments/assets/4c864935-2aa1-4fde-8e69-1619be2aa532" />
+
+
+**Barra de progresso**
+
+<img width="1920" height="1020" alt="Captura de tela 2025-09-20 191954" src="https://github.com/user-attachments/assets/0d7c1c26-f2b8-4299-b15f-b9db9f14034b" />
+
+
+**Membros da equipe**
+
+<img width="1920" height="1020" alt="Captura de tela 2025-09-20 172807" src="https://github.com/user-attachments/assets/7598ffc3-b27f-48a6-a165-e6c0392722d3" />
+
