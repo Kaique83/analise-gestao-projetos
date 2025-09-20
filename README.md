@@ -22,7 +22,7 @@ Os principais objetivos do GESTPRO são:
 * **Gestão de Membros:** Adicione e remova usuários de projetos e equipes de forma simples.
 * **Priorização de Tarefas:** Defina prioridades (Alta, Média, Baixa) para as tarefas, com indicadores visuais.
 
-## 🛠 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 * **Linguagem:** Python
 * **Interface Gráfica:** CustomTkinter
@@ -48,7 +48,7 @@ Os principais objetivos do GESTPRO são:
     python main.py
     ```
 
-## 🖼 Screenshots
+##  Screenshots
 
 **Tela de Login**
 
