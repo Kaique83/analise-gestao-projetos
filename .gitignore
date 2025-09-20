@@ -1,0 +1,19 @@
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Banco de dados
+gestao_projetos.db
+
+# Imagem gerada pelo dashboard
+task_status_chart.png
+
+# Pastas de ambiente virtual (comum em projetos Python)
+venv/
+.venv/
+env/
+.env/
+
+# Arquivos de configuração de IDEs
+.vscode/
+.idea/
