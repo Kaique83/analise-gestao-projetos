@@ -2,7 +2,7 @@
 
 Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes, desenvolvido em Python com a biblioteca CustomTkinter.
 
-## 🎯 Motivação e Objetivos
+##  Motivação e Objetivos
 
 Este projeto nasceu da necessidade de criar uma alternativa centralizada e visual às ferramentas genéricas, como planilhas, que frequentemente levam à desorganização e à falta de clareza no gerenciamento de projetos.
 
