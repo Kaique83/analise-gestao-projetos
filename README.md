@@ -40,8 +40,10 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
 
 ## 🖼 Screenshots
 
-![Tela de Login]
+**Tela de Login**
+
 <img width="495" height="589" alt="image" src="https://github.com/user-attachments/assets/29eabfff-c1f0-4180-806f-3cfd2756be9b" />
 
-![Dashboard]
+**Dashboard**
+
 <img width="1488" height="877" alt="image" src="https://github.com/user-attachments/assets/f4b25f41-b42c-4c0f-8500-81262ec87ff7" />
