@@ -11,7 +11,7 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
 * **Gestão de Membros:** Adicione e remova usuários de projetos e equipes de forma simples.
 * **Priorização de Tarefas:** Defina prioridades (Alta, Média, Baixa) para as tarefas, com indicadores visuais.
 
-##  Tecnologias Utilizadas
+## 🛠 Tecnologias Utilizadas
 
 * **Linguagem:** Python
 * **Interface Gráfica:** CustomTkinter
@@ -37,3 +37,9 @@ Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes
     ```bash
     python main.py
     ```
+
+## 🖼 Screenshots
+
+![Tela de Login]<img width="495" height="589" alt="image" src="https://github.com/user-attachments/assets/29eabfff-c1f0-4180-806f-3cfd2756be9b" />
+
+![Dashboard]<img width="1488" height="877" alt="image" src="https://github.com/user-attachments/assets/f4b25f41-b42c-4c0f-8500-81262ec87ff7" />
