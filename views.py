@@ -59,13 +59,11 @@ class MainApp:
         ctk.CTkLabel(title_frame, text="Dashboard", font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=0, sticky="w")
         ctk.CTkButton(title_frame, text="Atualizar", command=self.update_dashboard, width=100).grid(row=0, column=1, sticky="e")
         
-        # --- NOVO DASHBOARD COM GRÁFICO ---
         dashboard_frame = ctk.CTkFrame(self.content, fg_color="transparent")
         dashboard_frame.grid(row=1, column=0, sticky="nsew")
         dashboard_frame.grid_columnconfigure(0, weight=1)
-        dashboard_frame.grid_columnconfigure(1, weight=1) # Duas colunas
+        dashboard_frame.grid_columnconfigure(1, weight=1)
 
-        # Coluna da Esquerda para os cards
         card_frame = ctk.CTkFrame(dashboard_frame, fg_color="transparent")
         card_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         
@@ -81,7 +79,6 @@ class MainApp:
             ctk.CTkLabel(card, text=title, font=ctk.CTkFont(size=16)).grid(row=0, column=0, pady=(10,5), padx=20, sticky="w")
             ctk.CTkLabel(card, text=str(value), font=ctk.CTkFont(size=36, weight="bold"), text_color=color).grid(row=1, column=0, pady=(0,10), padx=20, sticky="w")
             
-        # Coluna da Direita para o Gráfico
         chart_frame = ctk.CTkFrame(dashboard_frame)
         chart_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
         
@@ -94,33 +91,23 @@ class MainApp:
             ctk.CTkLabel(parent, text="Sem dados de tarefas para exibir.").pack(expand=True)
             return
 
-        labels = tarefas_status.keys()
-        sizes = tarefas_status.values()
-        colors = ['#f1c40f', '#3498db', '#2ecc71', '#e74c3c'] # Pendente, Em Andamento, Concluída, Cancelada
+        labels = tarefas_status.keys(); sizes = tarefas_status.values()
+        colors = ['#f1c40f', '#3498db', '#2ecc71', '#e74c3c']
 
         plt.style.use('dark_background')
         fig, ax = plt.subplots(figsize=(5, 4), dpi=100)
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors,
-               textprops={'color': 'white', 'fontsize': 10})
-        ax.axis('equal')
-        ax.set_title("Distribuição de Tarefas por Status", color="white", fontsize=14)
-        fig.patch.set_facecolor('#242424') # Cor de fundo do CTkinter dark
+        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors, textprops={'color': 'white', 'fontsize': 10})
+        ax.axis('equal'); ax.set_title("Distribuição de Tarefas por Status", color="white", fontsize=14)
+        fig.patch.set_facecolor('#242424')
 
         chart_path = "task_status_chart.png"
         fig.savefig(chart_path, bbox_inches='tight', pad_inches=0.1)
         plt.close(fig)
 
-        chart_image = ctk.CTkImage(light_image=Image.open(chart_path),
-                                   dark_image=Image.open(chart_path),
-                                   size=(500, 400))
-        
-        image_label = ctk.CTkLabel(parent, image=chart_image, text="")
-        image_label.pack(expand=True, fill="both", padx=10, pady=10)
+        chart_image = ctk.CTkImage(light_image=Image.open(chart_path), dark_image=Image.open(chart_path), size=(500, 400))
+        image_label = ctk.CTkLabel(parent, image=chart_image, text=""); image_label.pack(expand=True, fill="both", padx=10, pady=10)
 
     def update_dashboard(self): self.show_dashboard()
-    
-    # ... O restante do código (show_usuarios, show_projetos, etc.) permanece o mesmo da resposta anterior ...
-    # Abaixo está o código completo para garantir que não haja erros.
     
     def show_usuarios(self):
         self.clear_content()
@@ -296,33 +283,43 @@ class MainApp:
         btn_frame = ctk.CTkFrame(title_frame, fg_color="transparent"); btn_frame.grid(row=0, column=1, sticky="e")
         ctk.CTkButton(btn_frame, text="Nova Tarefa", command=self.nova_tarefa).pack(side="left", padx=5)
 
-        kanban_container = ctk.CTkFrame(self.content, fg_color="transparent")
-        kanban_container.grid(row=1, column=0, sticky="nsew")
-        KanbanBoard(kanban_container, self.db, self.selected_project_id, self)
+        # O KanbanBoard agora é um Frame que preenche o espaço disponível
+        board = KanbanBoard(self.content, self.db, self.selected_project_id, self)
+        board.grid(row=1, column=0, sticky="nsew")
         
     def nova_tarefa(self):
         dialog = TarefaDialog(self.root, self.db, "Nova Tarefa", None, self.selected_project_id)
         self.root.wait_window(dialog)
         self.show_tarefas(); self.update_dashboard()
         
-class KanbanBoard:
+class KanbanBoard(ctk.CTkFrame): # <--- MUDANÇA AQUI (Herda de CTkFrame)
+    columns = ["Pendente", "Em Andamento", "Concluída"]
+    
     def __init__(self, parent, db, project_id, app):
-        self.parent = parent; self.db = db; self.project_id = project_id; self.app = app
-        self.columns = ["Pendente", "Em Andamento", "Concluída"]
+        super().__init__(parent, fg_color="transparent") # <--- MUDANÇA AQUI (Chama o construtor do Frame)
+        self.db = db; self.project_id = project_id; self.app = app
         
-        self.parent.grid_columnconfigure(list(range(len(self.columns))), weight=1)
+        # Configura o próprio frame do Kanban para ter colunas que se expandem
+        self.grid_columnconfigure(list(range(len(self.columns))), weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        
         self.create_columns(); self.populate_tasks()
 
     def create_columns(self):
         self.column_frames = {}
         for i, col_name in enumerate(self.columns):
-            col_container = ctk.CTkFrame(self.parent)
+            col_container = ctk.CTkFrame(self) # O pai agora é o próprio KanbanBoard (self)
             col_container.grid(row=0, column=i, sticky="nsew", padx=5, pady=5); col_container.grid_rowconfigure(1, weight=1)
             ctk.CTkLabel(col_container, text=col_name.upper(), font=ctk.CTkFont(size=14, weight="bold")).grid(row=0, pady=5)
             scroll_frame = ctk.CTkScrollableFrame(col_container, fg_color=("gray86", "gray20"))
             scroll_frame.grid(row=1, column=0, sticky="nsew"); self.column_frames[col_name] = scroll_frame
 
     def populate_tasks(self):
+        # Limpa as colunas antes de popular
+        for col_frame in self.column_frames.values():
+            for widget in col_frame.winfo_children():
+                widget.destroy()
+
         tarefas = self.db.get_tarefas_por_projeto(self.project_id)
         prioridade_cores = {"Alta": "#e74c3c", "Média": "#f1c40f", "Baixa": "#2ecc71"}
 
@@ -337,7 +334,6 @@ class KanbanBoard:
                 prioridade_frame.pack(anchor="w", padx=10, pady=5)
                 ctk.CTkLabel(prioridade_frame, text=prioridade, font=ctk.CTkFont(size=10), text_color="white").pack(padx=8, pady=2)
 
-                # Frame para botões de ação do card
                 card_actions_frame = ctk.CTkFrame(card, fg_color="transparent")
                 card_actions_frame.pack(fill="x", padx=10, pady=(0,5))
                 ctk.CTkButton(card_actions_frame, text="Excluir", height=25, width=60, fg_color="#e74c3c",
