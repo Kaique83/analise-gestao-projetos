@@ -35,6 +35,7 @@ class MainApp:
         if self.usuario[7] == 'administrador': botoes_menu.append(("👤  Usuários", self.show_usuarios))
         botoes_menu.extend([("📁  Projetos", self.show_projetos),
                              ("👨‍👩‍👧‍👦  Equipes", self.show_equipes),
+                             ("Sprint Ativo", self.show_sprint_ativo), # NOVO BOTÃO
                              ("✅  Quadro de Tarefas", self.show_tarefas)])
         
         for texto, comando in botoes_menu:
@@ -52,6 +53,54 @@ class MainApp:
     def clear_content(self):
         for widget in self.content.winfo_children(): widget.destroy()
     
+    # --- NOVA TELA: SPRINT ATIVO ---
+    def show_sprint_ativo(self):
+        self.clear_content()
+        
+        if self.selected_project_id is None:
+            ctk.CTkLabel(self.content, text="Selecione um projeto na tela 'Projetos' para ver o sprint ativo.",
+                         font=ctk.CTkFont(size=16)).pack(expand=True, padx=20, pady=20)
+            return
+
+        projeto_info = self.db.get_projeto(self.selected_project_id)
+        sprint_ativo = self.db.get_sprint_ativo_por_projeto(self.selected_project_id)
+
+        title_frame = ctk.CTkFrame(self.content, fg_color="transparent")
+        title_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        ctk.CTkLabel(title_frame, text=f"Sprint Ativo: {projeto_info[1]}", font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w")
+        
+        if not sprint_ativo:
+            ctk.CTkLabel(self.content, text="Nenhum sprint está ativo para este projeto.\nVá em 'Projetos' -> 'Planejar Sprints' para iniciar um.",
+                         font=ctk.CTkFont(size=16)).grid(row=1, column=0, pady=20)
+            return
+            
+        sprint_id, nome, inicio, fim, status, _ = sprint_ativo
+        
+        # Card de informações do Sprint
+        sprint_info_card = ctk.CTkFrame(self.content)
+        sprint_info_card.grid(row=1, column=0, sticky="ew", pady=(10,20))
+        sprint_info_card.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(sprint_info_card, text=nome, font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=0, padx=20, pady=(10,5), sticky="w")
+        ctk.CTkLabel(sprint_info_card, text=f"Período: {inicio} a {fim}", text_color="gray").grid(row=1, column=0, padx=20, pady=(0,10), sticky="w")
+        
+        # Barra de progresso
+        tarefas_sprint = self.db.get_tarefas_do_sprint(sprint_id)
+        tarefas_concluidas = [t for t in tarefas_sprint if self.db.get_tarefa(t[0])[5] == 'Concluída']
+        progresso = len(tarefas_concluidas) / len(tarefas_sprint) if tarefas_sprint else 0
+        
+        progress_bar = ctk.CTkProgressBar(sprint_info_card, height=10)
+        progress_bar.set(progresso)
+        progress_bar.grid(row=2, column=0, columnspan=2, padx=20, pady=(0,10), sticky="ew")
+        
+        ctk.CTkLabel(sprint_info_card, text=f"{len(tarefas_concluidas)} de {len(tarefas_sprint)} tarefas concluídas ({progresso:.0%})").grid(row=3, column=0, padx=20, pady=(0,10), sticky="w")
+
+        # Placeholder para o Gráfico de Burndown
+        burndown_frame = ctk.CTkFrame(self.content)
+        burndown_frame.grid(row=2, column=0, sticky="nsew")
+        ctk.CTkLabel(burndown_frame, text="[GRÁFICO DE BURNDOWN VIRÁ AQUI]", font=ctk.CTkFont(size=20)).pack(expand=True)
+
+    # ... (O restante das funções como show_dashboard, show_usuarios, etc., continuam aqui) ...
     def show_dashboard(self):
         self.clear_content()
         title_frame = ctk.CTkFrame(self.content, fg_color="transparent")
@@ -194,6 +243,7 @@ class MainApp:
 
             action_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
             action_frame.grid(row=0, column=1, rowspan=3, sticky="e")
+            ctk.CTkButton(action_frame, text="Planejar Sprints", width=120, command=lambda p=p_id, n=nome: self.show_sprint_planning(p, n)).pack(side="left", padx=5)
             ctk.CTkButton(action_frame, text="Editar", width=80, command=lambda p=p_id: self.editar_projeto(p)).pack(side="left", padx=5)
             ctk.CTkButton(action_frame, text="Membros", width=80, command=lambda p=p_id, n=nome: self.gerenciar_membros_projeto(p, n)).pack(side="left", padx=5)
             ctk.CTkButton(action_frame, text="Excluir", width=80, fg_color="#e74c3c", command=lambda p=p_id, n=nome: self.excluir_projeto(p, n)).pack(side="left", padx=5)
@@ -218,6 +268,9 @@ class MainApp:
     def selecionar_projeto_e_ver_tarefas(self, projeto_id):
         self.selected_project_id = projeto_id
         self.show_tarefas()
+
+    def show_sprint_planning(self, projeto_id, projeto_nome):
+        SprintPlanningDialog(self.root, self.db, projeto_id, projeto_nome)
 
     def show_equipes(self):
         self.clear_content()
@@ -283,7 +336,6 @@ class MainApp:
         btn_frame = ctk.CTkFrame(title_frame, fg_color="transparent"); btn_frame.grid(row=0, column=1, sticky="e")
         ctk.CTkButton(btn_frame, text="Nova Tarefa", command=self.nova_tarefa).pack(side="left", padx=5)
 
-        # O KanbanBoard agora é um Frame que preenche o espaço disponível
         board = KanbanBoard(self.content, self.db, self.selected_project_id, self)
         board.grid(row=1, column=0, sticky="nsew")
         
@@ -292,14 +344,13 @@ class MainApp:
         self.root.wait_window(dialog)
         self.show_tarefas(); self.update_dashboard()
         
-class KanbanBoard(ctk.CTkFrame): # <--- MUDANÇA AQUI (Herda de CTkFrame)
+class KanbanBoard(ctk.CTkFrame):
     columns = ["Pendente", "Em Andamento", "Concluída"]
     
     def __init__(self, parent, db, project_id, app):
-        super().__init__(parent, fg_color="transparent") # <--- MUDANÇA AQUI (Chama o construtor do Frame)
+        super().__init__(parent, fg_color="transparent")
         self.db = db; self.project_id = project_id; self.app = app
         
-        # Configura o próprio frame do Kanban para ter colunas que se expandem
         self.grid_columnconfigure(list(range(len(self.columns))), weight=1)
         self.grid_rowconfigure(0, weight=1)
         
@@ -308,17 +359,15 @@ class KanbanBoard(ctk.CTkFrame): # <--- MUDANÇA AQUI (Herda de CTkFrame)
     def create_columns(self):
         self.column_frames = {}
         for i, col_name in enumerate(self.columns):
-            col_container = ctk.CTkFrame(self) # O pai agora é o próprio KanbanBoard (self)
+            col_container = ctk.CTkFrame(self)
             col_container.grid(row=0, column=i, sticky="nsew", padx=5, pady=5); col_container.grid_rowconfigure(1, weight=1)
             ctk.CTkLabel(col_container, text=col_name.upper(), font=ctk.CTkFont(size=14, weight="bold")).grid(row=0, pady=5)
             scroll_frame = ctk.CTkScrollableFrame(col_container, fg_color=("gray86", "gray20"))
             scroll_frame.grid(row=1, column=0, sticky="nsew"); self.column_frames[col_name] = scroll_frame
 
     def populate_tasks(self):
-        # Limpa as colunas antes de popular
         for col_frame in self.column_frames.values():
-            for widget in col_frame.winfo_children():
-                widget.destroy()
+            for widget in col_frame.winfo_children(): widget.destroy()
 
         tarefas = self.db.get_tarefas_por_projeto(self.project_id)
         prioridade_cores = {"Alta": "#e74c3c", "Média": "#f1c40f", "Baixa": "#2ecc71"}
@@ -625,3 +674,151 @@ class MembrosDialog(ctk.CTkToplevel):
                 if self.tipo == "projeto": self.db.remove_usuario_do_projeto(self.item_id, user_id)
                 else: self.db.remove_usuario_da_equipe(self.item_id, user_id)
         self.populate_lists()
+        
+class SprintDialog(ctk.CTkToplevel):
+    def __init__(self, parent, db, projeto_id):
+        super().__init__(parent)
+        self.db = db; self.projeto_id = projeto_id; self.result = None
+        self.title("Novo Sprint"); self.geometry("400x350"); self.resizable(False, False); self.grab_set()
+        
+        self.main_frame = ctk.CTkFrame(self)
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        ctk.CTkLabel(self.main_frame, text="Dados do Sprint", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
+        
+        ctk.CTkLabel(self.main_frame, text="Nome do Sprint").pack(anchor="w"); self.nome_entry = ctk.CTkEntry(self.main_frame); self.nome_entry.pack(fill="x")
+        ctk.CTkLabel(self.main_frame, text="Data de Início (YYYY-MM-DD)").pack(anchor="w", pady=(10,0)); self.inicio_entry = ctk.CTkEntry(self.main_frame); self.inicio_entry.pack(fill="x")
+        self.inicio_entry.insert(0, datetime.now().strftime("%Y-%m-%d"))
+        ctk.CTkLabel(self.main_frame, text="Data de Fim (YYYY-MM-DD)").pack(anchor="w", pady=(10,0)); self.fim_entry = ctk.CTkEntry(self.main_frame); self.fim_entry.pack(fill="x")
+        self.fim_entry.insert(0, (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d"))
+
+        button_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(20, 0), side="bottom") # Botões ancorados na parte inferior
+        
+        ctk.CTkButton(button_frame, text="Salvar", command=self.salvar).pack(side="right")
+        ctk.CTkButton(button_frame, text="Cancelar", command=self.destroy, fg_color="transparent", border_width=1).pack(side="right", padx=10)
+        
+    def salvar(self):
+        nome = self.nome_entry.get().strip()
+        inicio = self.inicio_entry.get().strip()
+        fim = self.fim_entry.get().strip()
+        if not nome or not inicio or not fim: 
+            messagebox.showerror("Erro", "Todos os campos são obrigatórios.", parent=self)
+            return
+        self.result = (nome, inicio, fim, self.projeto_id)
+        self.destroy()
+
+class SprintPlanningDialog(ctk.CTkToplevel):
+    def __init__(self, parent, db, projeto_id, projeto_nome):
+        super().__init__(parent); self.db = db; self.projeto_id = projeto_id
+        self.title(f"Planejamento de Sprints: {projeto_nome}"); self.geometry("900x600"); self.resizable(True, True); self.grab_set()
+
+        self.grid_columnconfigure(0, weight=1); self.grid_columnconfigure(2, weight=2); self.grid_columnconfigure(4, weight=2)
+        self.grid_rowconfigure(1, weight=1)
+
+        ctk.CTkLabel(self, text="Sprints do Projeto", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, pady=10)
+        sprint_frame = ctk.CTkFrame(self); sprint_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        self.sprint_list = ctk.CTkScrollableFrame(sprint_frame)
+        self.sprint_list.pack(fill="both", expand=True)
+        
+        # Frame para os botões de ação do Sprint
+        sprint_action_frame = ctk.CTkFrame(sprint_frame)
+        sprint_action_frame.pack(fill="x", pady=5, padx=5)
+        ctk.CTkButton(sprint_action_frame, text="Novo Sprint", command=self.novo_sprint).pack(side="left", expand=True, padx=(0,5))
+        self.start_sprint_btn = ctk.CTkButton(sprint_action_frame, text="Iniciar Sprint", command=self.iniciar_sprint_selecionado, state="disabled")
+        self.start_sprint_btn.pack(side="left", expand=True)
+
+        ctk.CTkLabel(self, text="Backlog do Projeto", font=ctk.CTkFont(weight="bold")).grid(row=0, column=2, pady=10)
+        self.backlog_list = ctk.CTkScrollableFrame(self); self.backlog_list.grid(row=1, column=2, sticky="nsew", pady=5)
+
+        action_frame = ctk.CTkFrame(self, fg_color="transparent"); action_frame.grid(row=1, column=3, padx=5)
+        ctk.CTkButton(action_frame, text="▶", width=40, command=self.adicionar_tarefas_ao_sprint).pack(pady=5)
+        ctk.CTkButton(action_frame, text="◀", width=40, command=self.remover_tarefas_do_sprint).pack(pady=5)
+        
+        ctk.CTkLabel(self, text="Tarefas no Sprint", font=ctk.CTkFont(weight="bold")).grid(row=0, column=4, pady=10)
+        self.sprint_task_list = ctk.CTkScrollableFrame(self); self.sprint_task_list.grid(row=1, column=4, sticky="nsew", padx=5, pady=5)
+
+        self.selected_sprint_id = None
+        self.sprint_buttons = []
+        self.populate_sprints()
+
+    def novo_sprint(self):
+        dialog = SprintDialog(self, self.db, self.projeto_id)
+        self.wait_window(dialog)
+        if dialog.result: 
+            self.db.criar_sprint(dialog.result)
+            self.populate_sprints()
+
+    def populate_sprints(self):
+        for btn in self.sprint_buttons: btn.destroy()
+        self.sprint_buttons.clear()
+        
+        for sprint in self.db.get_sprints_por_projeto(self.projeto_id):
+            sprint_id, nome, _, _, status, _ = sprint
+            btn = ctk.CTkButton(self.sprint_list, text=f"{nome}\n({status})",
+                                command=lambda s_id=sprint_id: self.selecionar_sprint(s_id))
+            btn.pack(fill="x", pady=2, padx=2)
+            self.sprint_buttons.append(btn)
+        self.selecionar_sprint(None)
+
+    def selecionar_sprint(self, sprint_id):
+        self.selected_sprint_id = sprint_id
+        
+        # Atualiza a cor do botão selecionado
+        for btn in self.sprint_buttons:
+            # Extrai o ID do comando lambda para comparação
+            btn_sprint_id = btn.cget("command").__closure__[0].cell_contents
+            if btn_sprint_id == sprint_id:
+                btn.configure(fg_color=("#3a7ebf", "#1f538d"))
+            else:
+                btn.configure(fg_color=("#3b8ed0", "#1f6aa5"))
+        
+        # Habilita ou desabilita o botão "Iniciar Sprint"
+        if sprint_id:
+            sprint_data = self.db.get_sprint_por_id(sprint_id)
+            if sprint_data and sprint_data[4] == 'Planejado':
+                self.start_sprint_btn.configure(state="normal", text="Iniciar Sprint")
+            elif sprint_data and sprint_data[4] == 'Ativo':
+                self.start_sprint_btn.configure(state="normal", text="Concluir Sprint")
+            else:
+                self.start_sprint_btn.configure(state="disabled", text="Iniciar Sprint")
+        else:
+            self.start_sprint_btn.configure(state="disabled", text="Iniciar Sprint")
+            
+        self.populate_backlog(); self.populate_sprint_tasks()
+
+    def iniciar_sprint_selecionado(self):
+        if not self.selected_sprint_id: return
+        sprint_data = self.db.get_sprint_por_id(self.selected_sprint_id)
+        if sprint_data and sprint_data[4] == 'Planejado':
+            self.db.atualizar_status_sprint(self.selected_sprint_id, "Ativo")
+        elif sprint_data and sprint_data[4] == 'Ativo':
+            self.db.atualizar_status_sprint(self.selected_sprint_id, "Concluído")
+        self.populate_sprints()
+
+    def populate_backlog(self):
+        for widget in self.backlog_list.winfo_children(): widget.destroy()
+        self.backlog_checkboxes = []
+        for tarefa_id, titulo in self.db.get_tarefas_sem_sprint(self.projeto_id):
+            cb = ctk.CTkCheckBox(self.backlog_list, text=titulo)
+            cb.pack(anchor="w", padx=5); self.backlog_checkboxes.append((cb, tarefa_id))
+
+    def populate_sprint_tasks(self):
+        for widget in self.sprint_task_list.winfo_children(): widget.destroy()
+        self.sprint_task_checkboxes = []
+        if self.selected_sprint_id:
+            for tarefa_id, titulo in self.db.get_tarefas_do_sprint(self.selected_sprint_id):
+                cb = ctk.CTkCheckBox(self.sprint_task_list, text=titulo)
+                cb.pack(anchor="w", padx=5); self.sprint_task_checkboxes.append((cb, tarefa_id))
+
+    def adicionar_tarefas_ao_sprint(self):
+        if not self.selected_sprint_id: messagebox.showwarning("Aviso", "Selecione um sprint primeiro.", parent=self); return
+        for cb, tarefa_id in self.backlog_checkboxes:
+            if cb.get(): self.db.adicionar_tarefa_ao_sprint(tarefa_id, self.selected_sprint_id)
+        self.selecionar_sprint(self.selected_sprint_id)
+
+    def remover_tarefas_do_sprint(self):
+        if not self.selected_sprint_id: return
+        for cb, tarefa_id in self.sprint_task_checkboxes:
+            if cb.get(): self.db.remover_tarefa_do_sprint(tarefa_id)
+        self.selecionar_sprint(self.selected_sprint_id)

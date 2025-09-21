@@ -47,16 +47,20 @@ class Database:
                 )
             ''')
             
-            # Tabela de equipes
+            # Tabela de Sprints
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS equipes (
+                CREATE TABLE IF NOT EXISTS sprints (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nome TEXT NOT NULL,
-                    descricao TEXT
+                    data_inicio TEXT,
+                    data_fim TEXT,
+                    status TEXT DEFAULT 'Planejado', -- Planejado, Ativo, Concluído
+                    projeto_id INTEGER NOT NULL,
+                    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
                 )
             ''')
-            
-            # Tabela de tarefas com a nova coluna 'prioridade'
+
+            # Tabela de tarefas com a nova coluna 'sprint_id'
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tarefas (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,11 +72,22 @@ class Database:
                     prioridade TEXT DEFAULT 'Média',
                     responsavel_id INTEGER,
                     projeto_id INTEGER,
+                    sprint_id INTEGER, 
                     FOREIGN KEY (responsavel_id) REFERENCES usuarios (id) ON DELETE SET NULL,
-                    FOREIGN KEY (projeto_id) REFERENCES projetos (id) ON DELETE CASCADE
+                    FOREIGN KEY (projeto_id) REFERENCES projetos (id) ON DELETE CASCADE,
+                    FOREIGN KEY (sprint_id) REFERENCES sprints(id) ON DELETE SET NULL
                 )
             ''')
-            
+
+            # Tabela de equipes
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS equipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    descricao TEXT
+                )
+            ''')
+
             # Tabela de dependências entre tarefas
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tarefa_dependencias (
@@ -108,12 +123,12 @@ class Database:
                 )
             ''')
             
-            # Adiciona a coluna 'prioridade' se ela não existir
+            # Adiciona a coluna 'sprint_id' à tabela 'tarefas' se ela não existir
             try:
-                cursor.execute("ALTER TABLE tarefas ADD COLUMN prioridade TEXT DEFAULT 'Média'")
+                cursor.execute("ALTER TABLE tarefas ADD COLUMN sprint_id INTEGER REFERENCES sprints(id) ON DELETE SET NULL")
                 conn.commit()
             except sqlite3.OperationalError:
-                pass 
+                pass # A coluna já existe
             
             # Insere o usuário 'admin' padrão
             cursor.execute("SELECT COUNT(*) FROM usuarios WHERE login = 'admin'")
@@ -126,6 +141,66 @@ class Database:
             
             conn.commit()
             
+    # --- NOVO MÉTODO PARA O DASHBOARD DE SPRINT ---
+    def get_sprint_ativo_por_projeto(self, projeto_id):
+        """
+        Busca o sprint que está atualmente com o status 'Ativo' para um projeto.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM sprints WHERE projeto_id = ? AND status = 'Ativo' LIMIT 1", (projeto_id,))
+            return cursor.fetchone()
+
+    # --- MÉTODO ATUALIZADO PARA SPRINTS ---
+    def criar_sprint(self, dados_sprint):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO sprints (nome, data_inicio, data_fim, projeto_id) VALUES (?, ?, ?, ?)", dados_sprint)
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_sprints_por_projeto(self, projeto_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM sprints WHERE projeto_id = ? ORDER BY data_inicio DESC", (projeto_id,))
+            return cursor.fetchall()
+            
+    def get_tarefas_sem_sprint(self, projeto_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, titulo FROM tarefas WHERE projeto_id = ? AND sprint_id IS NULL", (projeto_id,))
+            return cursor.fetchall()
+
+    def get_tarefas_do_sprint(self, sprint_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, titulo FROM tarefas WHERE sprint_id = ?", (sprint_id,))
+            return cursor.fetchall()
+            
+    def adicionar_tarefa_ao_sprint(self, tarefa_id, sprint_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE tarefas SET sprint_id = ? WHERE id = ?", (sprint_id, tarefa_id))
+            conn.commit()
+
+    def remover_tarefa_do_sprint(self, tarefa_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE tarefas SET sprint_id = NULL WHERE id = ?", (tarefa_id,))
+            conn.commit()
+            
+    def get_sprint_por_id(self, sprint_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM sprints WHERE id = ?", (sprint_id,))
+            return cursor.fetchone()
+
+    # --- NOVO MÉTODO ---
+    def atualizar_status_sprint(self, sprint_id, novo_status):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE sprints SET status = ? WHERE id = ?", (novo_status, sprint_id))
+            conn.commit()
     def get_all_usuarios(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -169,8 +244,6 @@ class Database:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM usuarios WHERE id=?", (usuario_id,))
             conn.commit()
-    
-    # --- MÉTODOS PARA PROJETOS ---
     
     def get_all_projetos(self):
         with self.get_connection() as conn:
@@ -221,8 +294,6 @@ class Database:
             cursor.execute("DELETE FROM projetos WHERE id=?", (projeto_id,))
             conn.commit()
 
-    # --- MÉTODOS PARA EQUIPES ---
-
     def get_all_equipes(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -254,12 +325,7 @@ class Database:
             cursor.execute("DELETE FROM equipes WHERE id=?", (equipe_id,))
             conn.commit()
             
-    # --- MÉTODOS PARA TAREFAS ---
-    
     def get_tarefas_por_projeto(self, projeto_id):
-        """
-        NOVO: Busca todas as tarefas associadas a um projeto específico.
-        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -283,8 +349,8 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO tarefas (titulo, descricao, data_inicio, data_termino_prevista, 
-                                     status, prioridade, responsavel_id, projeto_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                     status, prioridade, responsavel_id, projeto_id, sprint_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
             ''', tarefa_data)
             conn.commit()
             return cursor.lastrowid
@@ -306,8 +372,6 @@ class Database:
             cursor.execute("DELETE FROM tarefas WHERE id=?", (tarefa_id,))
             conn.commit()
     
-    # --- MÉTODOS PARA LISTAS (COMBOBOX) ---
-
     def get_usuarios_para_combo(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -330,8 +394,6 @@ class Database:
             """)
             return cursor.fetchall()
 
-    # --- MÉTODOS PARA MEMBROS DE PROJETOS ---
-    
     def get_usuarios_do_projeto(self, projeto_id):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -366,8 +428,6 @@ class Database:
                            (projeto_id, usuario_id))
             conn.commit()
             
-    # --- MÉTODOS PARA MEMBROS DE EQUIPES ---
-    
     def get_usuarios_da_equipe(self, equipe_id):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -402,8 +462,6 @@ class Database:
                            (equipe_id, usuario_id))
             conn.commit()
 
-    # --- MÉTODOS PARA DASHBOARD ---
-
     def get_contagem_status_projetos(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -415,8 +473,6 @@ class Database:
             cursor = conn.cursor()
             cursor.execute("SELECT status, COUNT(*) FROM tarefas GROUP BY status")
             return dict(cursor.fetchall())
-
-    # --- MÉTODO PARA BARRA DE PROGRESSO ---
     
     def get_progresso_projeto(self, projeto_id):
         with self.get_connection() as conn:
