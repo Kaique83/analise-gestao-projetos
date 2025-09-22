@@ -1,76 +1,51 @@
-# 📊 Sistema de Gestão de Projetos (GESTPRO)
+# Projeto de Análise de Dados: Gestão de Projetos
 
-Um sistema de desktop completo para gerenciamento de projetos, tarefas e equipes, desenvolvido em Python com a biblioteca CustomTkinter.
+Este repositório contém um projeto de análise de dados exploratória (EDA) realizado em um banco de dados de um sistema fictício de gestão de projetos. A análise foi desenvolvida utilizando Python em um ambiente Jupyter Notebook.
 
-##  Motivação e Objetivos
+## Objetivo
 
-Este projeto nasceu da necessidade de criar uma alternativa centralizada e visual às ferramentas genéricas, como planilhas, que frequentemente levam à desorganização e à falta de clareza no gerenciamento de projetos.
+O objetivo desta análise é extrair insights acionáveis sobre o portfólio de projetos, a distribuição da carga de trabalho entre a equipe e a eficiência operacional, respondendo a perguntas críticas de negócio através da visualização de dados.
 
-Os principais objetivos do GESTPRO são:
+## Ferramentas e Bibliotecas
 
-* **Centralizar a Informação:** Oferecer um local único para todos os dados de projetos, equipes e tarefas.
-* **Aumentar a Visibilidade:** Fornecer uma visão clara e instantânea do progresso através de um dashboard com gráficos e barras de progresso.
-* **Otimizar o Fluxo de Trabalho:** Implementar um quadro Kanban para uma gestão de tarefas ágil e transparente.
-* **Facilitar a Colaboração:** Definir papéis de usuário claros e permitir o gerenciamento de membros em projetos e equipes.
-
-##  Funcionalidades
-
-* **Dashboard Intuitivo:** Visualização rápida do status dos projetos e tarefas com gráficos.
-* **Gestão de Projetos:** Crie, edite e acompanhe o progresso dos projetos com barras de progresso visuais.
-* **Quadro Kanban de Tarefas:** Organize as tarefas de cada projeto em um quadro interativo com colunas ("Pendente", "Em Andamento", "Concluída").
-* **Controle de Acesso:** Acesso a certas áreas (como a gestão de usuários) restrito a perfis de administrador.
-* **Gestão de Membros:** Adicione e remova usuários de projetos e equipes de forma simples.
-* **Priorização de Tarefas:** Defina prioridades (Alta, Média, Baixa) para as tarefas, com indicadores visuais.
-
-##  Tecnologias Utilizadas
-
-* **Linguagem:** Python
-* **Interface Gráfica:** CustomTkinter
+* **Linguagem:** Python 3
 * **Banco de Dados:** SQLite
-* **Gráficos:** Matplotlib
+* **Análise de Dados:** Pandas
+* **Visualização:** Matplotlib, Seaborn
+* **Ambiente:** Jupyter Notebook
 
-##  Como Executar o Projeto
+## Como Executar a Análise
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/Kaique83/sistema-gestao-projetos.git](https://github.com/Kaique83/sistema-gestao-projetos.git)
+    git clone [https://github.com/Kaique83/A3UAM1-analise.git](https://github.com/Kaique83/A3UAM1-analise.git)
+    cd A3UAM1-analise
     ```
-2.  **Navegue até a pasta do projeto:**
+
+2.  **Instale as dependências:**
     ```bash
-    cd sistema-gestao-projetos
+    pip install pandas matplotlib seaborn jupyter
     ```
-3.  **Instale as dependências:**
+
+3.  **Popule o banco de dados (Opcional):**
+    O repositório já contém um banco de dados (`gestao_projetos.db`) populado. Caso queira gerar novos dados, instale a biblioteca Faker (`pip install Faker`) e execute o script:
     ```bash
-    pip install -r requirements.txt
+    python populate_db.py
     ```
-4.  **Execute a aplicação:**
+
+4.  **Inicie o Jupyter Notebook:**
     ```bash
-    python main.py
+    python -m notebook
     ```
 
-##  Screenshots
+5.  No seu navegador, abra o arquivo `analise_projetos.ipynb` e execute as células.
 
-**Tela de Login**
+## Principais Análises Realizadas
 
-<img width="495" height="589" alt="image" src="https://github.com/user-attachments/assets/29eabfff-c1f0-4180-806f-3cfd2756be9b" />
+* Visão Geral do Status dos Projetos
+* Análise de Carga de Trabalho Detalhada por Pessoa e Prioridade
+* Distribuição de Projetos por Gerente
+* Heatmap de Concentração de Tarefas por Status e Prioridade
 
-
-**Dashboard**
-
-<img width="1488" height="877" alt="image" src="https://github.com/user-attachments/assets/f4b25f41-b42c-4c0f-8500-81262ec87ff7" />
-
-
-**Quadro Kanban**
-
-<img width="1920" height="1020" alt="Captura de tela 2025-09-20 192100" src="https://github.com/user-attachments/assets/4c864935-2aa1-4fde-8e69-1619be2aa532" />
-
-
-**Barra de progresso**
-
-<img width="1920" height="1020" alt="Captura de tela 2025-09-20 191954" src="https://github.com/user-attachments/assets/0d7c1c26-f2b8-4299-b15f-b9db9f14034b" />
-
-
-**Membros da equipe**
-
-<img width="1920" height="1020" alt="Captura de tela 2025-09-20 172807" src="https://github.com/user-attachments/assets/7598ffc3-b27f-48a6-a165-e6c0392722d3" />
-
+---
+*Esta análise foi realizada sobre os dados gerados pela aplicação de desktop para Gestão de Projetos, que pode ser encontrada [neste outro repositório](https://github.com/Kaique83/sistema-gestao-projetos).*

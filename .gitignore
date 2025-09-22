@@ -1,19 +1,10 @@
 # Arquivos de cache do Python
 __pycache__/
-*.pyc
 
-# Banco de dados
+# Checkpoints do Jupyter Notebook
+.ipynb_checkpoints/
+
+# Banco de dados (opcional, mas recomendado)
+# Ignoramos o banco de dados porque qualquer pessoa pode gerá-lo
+# usando o script populate_db.py, mantendo o repositório leve.
 gestao_projetos.db
-
-# Imagem gerada pelo dashboard
-task_status_chart.png
-
-# Pastas de ambiente virtual (comum em projetos Python)
-venv/
-.venv/
-env/
-.env/
-
-# Arquivos de configuração de IDEs
-.vscode/
-.idea/
